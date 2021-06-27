@@ -149,7 +149,7 @@ select stream "user_id"
      , lag("arrival_time",18) over W as "artm_18"
      , lag("arrival_time",19) over W as "artm_19"
 from cp_step_1 s 
-window W as (partition by "user_id" range interval '4' hour preceding)
+window W as (partition by "user_id" range interval '24' hour preceding)
 ;
 
 create or replace view flow_step_1 as
@@ -320,5 +320,11 @@ order by s.rowtime, "flow_id", "interval_start_time"
 
 !outputformat csv
 
-select stream rowtime,* from flow_intervals_4;
+select stream rowtime 
+    ,"flow_id","flow_start_time", "flow_end_time","flow_bytes"
+    ,"user_id","cell_id"
+    ,"flow_interval","interval_start_time","interval_end_time","interval_bytes"
+    ,sum("interval_bytes") over w as "cumulative_bytes"
+from flow_intervals_4
+window w as (partition by "flow_id" range interval '0' second preceding);
 
